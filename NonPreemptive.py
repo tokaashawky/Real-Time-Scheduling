@@ -1,0 +1,64 @@
+import matplotlib.pyplot as plt
+
+def non_preemptive_scheduler(jobs, max_time):
+    schedule = []
+    current_time = 0
+    remaining_jobs = jobs.copy()
+    current_job = None
+    
+    while current_time < max_time:
+        if current_job is None:
+            available_jobs = [job for job in remaining_jobs if job.release_time <= current_time]
+            if available_jobs:
+                current_job = min(available_jobs, key=lambda x: x.id)
+                schedule.append((current_time, current_job.id))
+                current_time += 1  # Advance time by 1 unit
+                current_job.remaining_time -= 1  # Decrement remaining execution time
+                if current_job.remaining_time == 0:
+                    remaining_jobs.remove(current_job)  # Remove completed job
+                    current_job = None  # Reset current job
+                # Check if the job exceeds its deadline
+                if current_time > current_job.deadline:
+                    print(f"The job which has the release time = {current_job.release_time} breaks its deadline in {current_job.deadline}")
+                          
+            else:
+                schedule.append((current_time, None))
+                current_time += 1
+        else:
+            # Continue executing the current job until it completes
+            schedule.append((current_time, current_job.id))
+            current_time += 1  # Advance time by 1 unit
+            current_job.remaining_time -= 1  # Decrement remaining execution time
+            if current_job.remaining_time == 0:
+                remaining_jobs.remove(current_job)  # Remove completed job
+                current_job = None  # Reset current job
+    
+    return schedule 
+
+
+def draw_timing_diagram1(schedule, max_time):
+    plt.figure(figsize=(10, 5))
+    
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']  # Colors for each task
+    
+    # Dictionary to store the y-coordinate for each priority
+    priority_y_coordinate = {}
+    
+    for i in range(len(schedule)):
+        time, id = schedule[i]
+        if id is not None:
+            if id not in priority_y_coordinate:
+                # Assign a fixed y-coordinate for the given priority if not assigned yet
+                priority_y_coordinate[id] = len(priority_y_coordinate)  # Incremental y-coordinate for each priority
+            y_coordinate = priority_y_coordinate[id]
+            task_color = colors[id % len(colors)]  # Assign color based on task priority
+            plt.plot([time, time + 1], [y_coordinate, y_coordinate], color=task_color, linewidth=3)
+    
+    plt.xlim(0, max_time)
+    plt.ylim(-1, len(priority_y_coordinate))  # Adjust ylim based on the number of unique priorities
+    plt.xlabel('Time')
+    plt.ylabel('Task ID')
+    plt.title('Non_Preemptive Timing Diagram')
+    plt.yticks(range(len(priority_y_coordinate)), sorted(priority_y_coordinate.keys()))  # Assign y-axis ticks based on priority
+    plt.grid(True)
+    plt.show()
